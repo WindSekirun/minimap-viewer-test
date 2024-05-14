@@ -4,12 +4,22 @@
       <div
         v-for="(log, index) in logs"
         :key="index"
-        :style="{ backgroundColor: log.backgroundColor, color: log.textColor }"
+        :style="{
+          backgroundColor: log.backgroundColor,
+          color: log.textColor,
+        }"
         class="log-item"
       >
         #{{ log.id }}. {{ log.log }}
       </div>
     </div>
+    <v-btn
+      v-show="showScrollToTop"
+      class="scroll-to-top-btn"
+      @click="clickScrollToTop"
+      icon="mdi-chevron-up"
+    >
+    </v-btn>
   </div>
 </template>
 
@@ -17,22 +27,26 @@
 import { ref, nextTick, onMounted } from "vue";
 import { LogContent } from "../model/LogContent";
 
+const lengthPerPage = 160;
+const maxPage = 5;
+
 const logs = ref<LogContent[]>([]);
 const hasNextPage = ref(false);
 const page = ref(1);
 const logContainer = ref<HTMLElement | null>(null);
-
 const emit = defineEmits<{
   (eventName: "called", page: number): void;
 }>();
-const lengthPerPage = 160
-const maxPage = 5
+const showScrollToTop = ref(false);
 
 const fetchLogs = async (pageNum: number) => {
   const response = {
     data: {
       logContent: Array.from({ length: lengthPerPage }, (_, index) => ({
-        id: (lengthPerPage * maxPage) - ((pageNum - 1) * lengthPerPage) - (lengthPerPage - index),
+        id:
+          lengthPerPage * maxPage -
+          (pageNum - 1) * lengthPerPage -
+          (lengthPerPage - index - 1),
         log: Array.from(
           { length: Math.floor(Math.random() * 109) + 12 },
           () => Math.random().toString(36)[2]
@@ -67,6 +81,19 @@ const onScroll = async () => {
       }
     });
   }
+
+  showScrollToTop.value = scrollTop > clientHeight;
+};
+
+const clickScrollToTop = async () => {
+  while (hasNextPage.value) {
+    page.value += 1;
+    await fetchLogs(page.value);
+  }
+
+  if (logContainer.value) {
+    logContainer.value.scrollTop = 0;
+  }
 };
 
 onMounted(async () => {
@@ -83,11 +110,19 @@ onMounted(async () => {
 .log-container {
   height: 100vh;
   overflow-y: auto;
+  position: relative;
 }
 
 .log-item {
   white-space: pre-wrap;
   padding: 2px;
   font-size: 0.7em;
+}
+
+.scroll-to-top-btn {
+  position: fixed;
+  bottom: 54px;
+  right: 20px;
+  z-index: 1000;
 }
 </style>
