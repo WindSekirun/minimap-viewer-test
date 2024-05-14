@@ -1,6 +1,11 @@
 export interface LogContent {
   id: number;
   log: string;
-  backgroundColor: string;
-  textColor: string;
+  style: LogStyle;
+}
+
+export enum LogStyle {
+  NORMAL,
+  WARNING,
+  ERROR
 }

@@ -26,7 +26,7 @@
       </v-main>
       <v-footer class="pl-0" inset app color="grey-lighten-3">
         <div class="ms-2">
-          LogViewer Test
+          minimap-viewer-test 
         </div>
       </v-footer>
     </v-app>
@@ -45,3 +45,16 @@ function called(page: number) {
   snackBar.value = true;
 }
 </script>
+
+<style>
+html {
+  overflow: hidden !important;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+</style>
