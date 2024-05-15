@@ -5,15 +5,19 @@
         v-for="(log, index) in logs"
         :key="index"
         :style="getLogLineStyle(log)"
-        class="log-item"
+        class="log-item ms-2 me-2"
       >
         #{{ log.id }}. {{ log.log }}
-        <div v-show="log.id == lastLine" style="height:40px" />
+        <div v-show="log.id == lastLine" style="height: 80px" />
       </div>
     </div>
-    <canvas ref="minimap" class="minimap" @click="onMinimapClick"></canvas>
+    <canvas
+      ref="minimap"
+      class="minimap"
+      @mousedown="onMinimapDragStart"
+      @click="onMinimapClick"
+    ></canvas>
     <v-btn
-      v-show="showScrollToTop"
       class="scroll-to-top-btn"
       @click="clickScrollToTop"
       icon="mdi-chevron-up"
@@ -26,7 +30,7 @@
 import { ref, nextTick, onMounted, watch } from "vue";
 import { LogContent, LogStyle } from "../model/LogContent";
 
-const lengthPerPage = 160;
+const lengthPerPage = 80;
 const maxPage = 5;
 
 const logs = ref<LogContent[]>([]);
@@ -38,26 +42,26 @@ const minimap = ref<HTMLCanvasElement | null>(null);
 const emit = defineEmits<{
   (eventName: "called", page: number): void;
 }>();
-const showScrollToTop = ref(false);
+const isDragging = ref(false);
 
 const getLogStyle = (log: LogContent) => {
   let result: { backgroundColor: string; textColor: string };
   switch (log.style) {
     case LogStyle.ERROR:
       result = {
-        backgroundColor: "#ff0000",
+        backgroundColor: "#DC143C",
         textColor: "#ffffff",
       };
       break;
     case LogStyle.WARNING:
       result = {
-        backgroundColor: "#ffff00",
+        backgroundColor: "#FFFF33",
         textColor: "#000000",
       };
       break;
     default:
       result = {
-        backgroundColor: "#ffffff",
+        backgroundColor: "#FFFFFF",
         textColor: "#000000",
       };
       break;
@@ -72,6 +76,7 @@ const getLogLineStyle = (log: LogContent) => {
 };
 
 const fetchLogs = async (pageNum: number) => {
+  await new Promise(resolve => setTimeout(resolve, 1000));
   const response = {
     data: {
       logContent: Array.from({ length: lengthPerPage }, (_, index) => ({
@@ -84,9 +89,9 @@ const fetchLogs = async (pageNum: number) => {
           () => Math.random().toString(36)[2]
         ).join(""),
         style:
-          index % (Math.floor(Math.random() * 20) + 1) == 0
+          index % (Math.floor(Math.random() * 169) + 1) == 0
             ? LogStyle.ERROR
-            : index % (Math.floor(Math.random() * 20) + 1) == 0
+            : index % (Math.floor(Math.random() * 80) + 1) == 0
             ? LogStyle.WARNING
             : LogStyle.NORMAL,
       })),
@@ -118,7 +123,6 @@ const onScroll = async () => {
     });
   }
 
-  showScrollToTop.value = scrollTop > clientHeight;
   drawMinimap();
 };
 
@@ -154,19 +158,23 @@ const drawMinimap = () => {
   minimap.value.height = minimapHeight;
 
   context.clearRect(0, 0, minimapWidth, minimapHeight);
+  context.fillStyle = "rgba(0, 0, 0, 0.35)";
+  context.fillRect(0, 0, minimapWidth, minimapHeight);
 
   logs.value.forEach((log, index) => {
     const result: { backgroundColor: string; textColor: string } =
       getLogStyle(log);
     const y = index * (logLineHeight + logSpacing);
-    context.fillStyle = result.backgroundColor;
-    context.fillRect(0, y, minimapWidth, logLineHeight);
+    if (log.style != LogStyle.NORMAL) {
+      context.fillStyle = result.backgroundColor;
+      context.fillRect(0, y, minimapWidth, logLineHeight);
+    }
   });
 
   const viewportStartY = (scrollTop / containerHeight) * minimapHeight;
   const viewportHeightScaled =
     (viewportHeight / containerHeight) * minimapHeight;
-  context.fillStyle = "rgba(0, 0, 0, 0.2)";
+  context.fillStyle = "rgba(255, 255, 255, 0.4)";
   context.fillRect(0, viewportStartY, minimapWidth, viewportHeightScaled);
 };
 
@@ -180,9 +188,32 @@ const onMinimapClick = (event: MouseEvent) => {
   logContainer.value.scrollTop = clickY * scale;
 };
 
+const onMinimapDragStart = (event: MouseEvent) => {
+  isDragging.value = true;
+  onMinimapDragMove(event);
+  window.addEventListener("mousemove", onMinimapDragMove);
+  window.addEventListener("mouseup", onMinimapDragEnd);
+};
+
+const onMinimapDragMove = (event: MouseEvent) => {
+  if (!isDragging.value || !minimap.value || !logContainer.value) return;
+
+  const rect = minimap.value.getBoundingClientRect();
+  const dragY = event.clientY - rect.top;
+  const scale = logContainer.value.scrollHeight / minimap.value.clientHeight;
+
+  logContainer.value.scrollTop = dragY * scale;
+};
+
+const onMinimapDragEnd = () => {
+  isDragging.value = false;
+  window.removeEventListener("mousemove", onMinimapDragMove);
+  window.removeEventListener("mouseup", onMinimapDragEnd);
+};
+
 onMounted(async () => {
   await fetchLogs(page.value);
-  lastLine.value = logs.value.at(-1)?.id || 0
+  lastLine.value = logs.value.at(-1)?.id || 0;
   nextTick(() => {
     if (logContainer.value) {
       logContainer.value.scrollTop = logContainer.value.scrollHeight;
@@ -201,28 +232,28 @@ watch(logs, drawMinimap);
   position: relative;
   scrollbar-width: none;
   -ms-overflow-style: none;
-  margin-right: 70px;
 }
 
 .log-item {
-  white-space: normal;
-  padding: 1px;
+  word-wrap:break-word;
+  padding: 3px;
   font-size: 0.7em;
 }
 
 .scroll-to-top-btn {
   position: fixed;
-  bottom: 54px;
-  right: 90px;
+  bottom: 16px;
+  right: 16px;
   z-index: 1000;
 }
 
 .minimap {
   position: fixed;
-  top: 0px;
-  right: 0px;
-  width: 70px;
-  height: 100vh;
+  top: 10px;
+  right: 10px;
+  width: 100px;
+  height: 250px;
+  border: 1px solid #bbb;
   z-index: 1000;
   cursor: pointer;
 }

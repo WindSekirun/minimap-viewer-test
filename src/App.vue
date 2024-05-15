@@ -1,7 +1,13 @@
 <template>
   <suspense>
     <v-app>
-      <v-navigation-drawer class="pt-4" color="grey-lighten-3" model-value rail permanent>
+      <v-navigation-drawer
+        class="pt-4"
+        color="grey-lighten-3"
+        model-value
+        rail
+        permanent
+      >
         <v-avatar
           v-for="n in 6"
           :key="n"
@@ -12,6 +18,11 @@
       </v-navigation-drawer>
 
       <v-main>
+        <div class="pa-2">
+          <v-btn variant="text" slim density="compact" icon="mdi-chevron-left"></v-btn>
+          <v-btn variant="text" slim density="comfortable">#62009</v-btn>
+          <span class="text-button">Build lOg</span>
+        </div>
         <LogViewer @called="called" ref="logViewer" />
         <div class="text-center">
           <v-snackbar
@@ -24,11 +35,6 @@
           </v-snackbar>
         </div>
       </v-main>
-      <v-footer class="pl-0" inset app color="grey-lighten-3">
-        <div class="ms-2">
-          minimap-viewer-test 
-        </div>
-      </v-footer>
     </v-app>
   </suspense>
 </template>
