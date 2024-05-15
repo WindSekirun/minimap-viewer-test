@@ -178,6 +178,14 @@ const drawMinimap = () => {
   context.fillRect(0, viewportStartY, minimapWidth, viewportHeightScaled);
 };
 
+const disableTextSelection = () => {
+  document.body.style.userSelect = 'none';
+};
+
+const enableTextSelection = () => {
+  document.body.style.userSelect = 'auto';
+};
+
 const onMinimapClick = (event: MouseEvent) => {
   if (!minimap.value || !logContainer.value) return;
 
@@ -190,6 +198,7 @@ const onMinimapClick = (event: MouseEvent) => {
 
 const onMinimapDragStart = (event: MouseEvent) => {
   isDragging.value = true;
+  disableTextSelection();
   onMinimapDragMove(event);
   window.addEventListener("mousemove", onMinimapDragMove);
   window.addEventListener("mouseup", onMinimapDragEnd);
@@ -207,6 +216,7 @@ const onMinimapDragMove = (event: MouseEvent) => {
 
 const onMinimapDragEnd = () => {
   isDragging.value = false;
+  enableTextSelection();
   window.removeEventListener("mousemove", onMinimapDragMove);
   window.removeEventListener("mouseup", onMinimapDragEnd);
 };
