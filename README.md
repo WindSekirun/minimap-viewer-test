@@ -5,6 +5,8 @@
   * 드래그로 스크롤 가능
 
 ## 샘플
+Live Demo: https://windsekirun.github.io/minimap-viewer-test/
+
 ![](docs/sample.gif)
 
 ## 빌드
